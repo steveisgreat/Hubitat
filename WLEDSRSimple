@@ -4,28 +4,22 @@
 *
 *  Original Author: bryan@joyful.house
 *
-*  Date: 2019-11-27
+*  Version:  1.0
 */
 import java.net.URLEncoder
 
 metadata {
     definition (name: "WLED SR Simple", namespace: "steveisgreat", author: "Steve Riley", importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/WLEDSRSimple") {
         capability "Color Control"
-//        capability "Color Temperature"
         capability "Refresh"
         capability "Switch"
         capability "Switch Level"
-  //      capability "Light"
-//        capability "ColorMode"
 
         attribute "colorName", "string"
         attribute "effectName", "string"
         attribute "paletteName", "string"
         attribute "presetValue", "Number"
-        
-        //command "getEffects"
-        //command "getPalettes"
-               	
+           	
         command "setEffect", 
             [
                 [name:"FX ID", type: "NUMBER", description: "Effect ID", constraints: []],
