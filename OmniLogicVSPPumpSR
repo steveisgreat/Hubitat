@@ -7,7 +7,8 @@ metadata {
   definition (
     name: "OmniLogic VSP Pump (sr)",
     namespace: "maartenvantjonger",
-    author: "Maarten van Tjonger"
+    author: "Maarten van Tjonger",
+    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicVSPPumpSR"
   ) {
     capability "Switch"
     capability "Switch Level"      
