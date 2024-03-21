@@ -1,13 +1,13 @@
 /**
  *  OmniLogic Heater (sr)
  *
- *  Copyright 2021 Maarten van Tjonger
+ *  Original Author: Maarten van Tjonger
  */
 metadata {
   definition (
     name: "OmniLogic Heater (sr)",
-    namespace: "maartenvantjonger",
-    author: "Maarten van Tjonger",
+    namespace: "steveisgreat",
+    author: "Steve Riley",
     importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicHeaterSR"
   ) {
     capability "Sensor"
