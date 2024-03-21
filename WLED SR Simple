@@ -9,7 +9,7 @@
 import java.net.URLEncoder
 
 metadata {
-    definition (name: "WLED SR Simple", namespace: "steveisgreat", author: "Steve Riley") {
+    definition (name: "WLED SR Simple", namespace: "steveisgreat", author: "Steve Riley", importUrl: "https://raw.githubusercontent.com") {
         capability "Color Control"
 //        capability "Color Temperature"
         capability "Refresh"
