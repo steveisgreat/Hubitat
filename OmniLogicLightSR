@@ -8,7 +8,7 @@ metadata {
     name: "OmniLogic Light (sr)",
     namespace: "steveisgreat",
     author: "Steve Riley",
-    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicHeaterSR"
+    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicLightSR"
   ) {
     capability "Switch"
     capability "Actuator"
