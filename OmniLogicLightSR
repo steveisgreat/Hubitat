@@ -1,0 +1,309 @@
+/**
+ *  OmniLogic Light (sr)
+ *
+ *  Copyright 2021 Maarten van Tjonger
+ */
+metadata {
+  definition (
+    name: "OmniLogic Light (sr)",
+    namespace: "maartenvantjonger",
+    author: "Maarten van Tjonger"
+  ) {
+    capability "Switch"
+    capability "Actuator"
+    capability "Refresh"
+
+    attribute "bowId", "number"
+    attribute "omnilogicId", "number"
+
+    command "setLightShow", [[name :'Show (0-26)', type:'ENUM', description:'Desired Light Show', constraints: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]],
+							 [name:'Speed (0-8)', type:'ENUM', description:'Desired Light Speed', constraints: [0,1,2,3,4,5,6,7,8]],
+							 [name:'Brightness (0-4)', type:'ENUM', description:'Desired Brightness', constraints: [0,1,2,3,4]]]
+    command "setLightShowFixed", [[name:'Color', type:'ENUM', description:'Desired Light Color', constraints: ['Deep Blue Sea','Royal Blue','Afternoon Skies','Aqua Green','Emerald','Cloud White','Warm Red','Flamingo','Vivid Violet','Sangria','Yellow','Orange','Gold','Mint','Teal','Burnt Orange','Pure White','Crisp White','Warm White','Bright Yellow']],
+                                  [name:'Brightness', type:'ENUM', description:'Desired Brightness', constraints: ['20%','40%','60%','80%','100%']]]
+    command "setLightShowMulti", [[name:'Show', type:'ENUM', description:'Desired Light Show', constraints: ['Voodoo Lounge','Twilight','Tranquility','Gemstone','USA','Mardi Gras','Cool Cabaret']],
+                                  [name:'Speed', type:'ENUM', description:'Desired Light Speed', constraints: ['1/16x','1/8x','1/4x','1/2x','1x','2x','4x','8x','16x']],
+							      [name:'Brightness', type:'ENUM', description:'Desired Brightness', constraints: ['20%','40%','60%','80%','100%']]]      
+  }
+
+  tiles {
+    standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true, decoration: "flat") {
+      state("off", label: "${name}", action: "on")
+      state("on", label: "${name}", action: "off")
+    }
+
+    main("switch")
+    details(["switch"])
+  }
+}
+
+def initialize(omnilogicId, attributes) {
+  logMethod("initialize", "Arguments", [omnilogicId, attributes])
+  sendEvent(name: "omnilogicId", value: omnilogicId, displayed: true)
+  sendEvent(name: "bowId", value: attributes["bowId"], displayed: true)
+  refresh()
+}
+
+def refresh() {
+  logMethod("refresh")
+  parent.updateDeviceStatuses()
+}
+
+def parseStatus(deviceStatus, telemetryData) {
+  logMethod("parseStatus", "Arguments", [deviceStatus])
+
+  //def lightStateMap = [0: 'Off', 1: 'Turning Off', 3: 'Changing', 4: 'Turning On', 6: 'On', 7: 'Turning Off']       
+  
+  def lightStateMap = [0: 'off', 1: 'off', 3: 'on', 4: 'on', 6: 'on', 7: 'off']       
+  def lightState = deviceStatus?.@lightState?.text()
+  sendEvent(name: "lightState", value: lightState, displayed: true)
+      
+  def currentState = lightStateMap[lightState.toInteger()]    
+  sendEvent(name: "switch", value: currentState, displayed: true)
+
+  def currentShow = deviceStatus?.@currentShow?.text()
+  if (currentShow != null) {
+    sendEvent(name: "show", value: currentShow, displayed: true)
+  }
+  
+  def brightness = deviceStatus?.@brightness?.text()
+  if (brightness != null) {
+    sendEvent(name: "brightness", value: brightness, displayed: true)
+  }   
+  
+  def speed = deviceStatus?.@speed?.text()
+  if (speed != null) {
+    sendEvent(name: "speed", value: speed, displayed: true)
+  }       
+}
+
+def on() {
+  logMethod("on")
+  setLightState(true)
+}
+
+def off() {
+  logMethod("off")
+  setLightState(false)
+}
+
+def setLightState(isOn) {
+  logMethod("setLightState", "Arguments", [isOn])
+
+  def parameters = [
+    [name: "PoolID", dataType: "int", value: device.currentValue("bowId")],
+    [name: "EquipmentID", dataType: "int", value: device.currentValue("omnilogicId")],
+    [name: "IsOn", dataType: "int", value: isOn ? 100 : 0],
+    [name: "IsCountDownTimer", dataType: "bool", value: false],
+    [name: "StartTimeHours", dataType: "int", value: 0],
+    [name: "StartTimeMinutes", dataType: "int", value: 0],
+    [name: "EndTimeHours", dataType: "int", value: 0],
+    [name: "EndTimeMinutes", dataType: "int", value: 0],
+    [name: "DaysActive", dataType: "int", value: 0],
+    [name: "Recurring", dataType: "bool", value: false]
+  ]
+
+  parent.performApiRequest("SetUIEquipmentCmd", parameters) { response ->
+    def success = response.Parameters.Parameter.find { it.@name == "Status" }.text() == "0"
+    if (success) {
+      def onOff = isOn ? "on" : "off"
+      sendEvent(name: "switch", value: onOff, displayed: true, isStateChange: true)
+     }
+  }
+}
+
+def setLightShow(show, speed, brightness) {
+  logMethod("setLightShow", "Arguments", [show, speed, brightness])
+
+  def parameters = [
+    [name: "PoolID", dataType: "int", value: device.currentValue("bowId")],
+    [name: "LightID", dataType: "int", value: device.currentValue("omnilogicId")],
+    [name: "Show", dataType: "int", value: show],
+    [name: "Reserved", dataType: "byte", value: 0],
+    [name: "IsCountDownTimer", dataType: "bool", value: false],
+    [name: "StartTimeHours", dataType: "int", value: 0],
+    [name: "StartTimeMinutes", dataType: "int", value: 0],
+    [name: "EndTimeHours", dataType: "int", value: 0],
+    [name: "EndTimeMinutes", dataType: "int", value: 0],
+    [name: "DaysActive", dataType: "int", value: 0],
+    [name: "Recurring", dataType: "bool", value: false],
+    [name: "Speed", dataType: "byte", value: speed],
+    [name: "Brightness", dataType: "byte", value: brightness],
+  ]
+
+  parent.performApiRequest("SetStandAloneLightShow", parameters) { response ->
+    def success = response.Parameters.Parameter.find { it.@name == "Status" }.text() == "0"
+    if (success) {
+       sendEvent(name: "switch", value: 'on', displayed: true, isStateChange: true)
+       sendEvent(name: "show", value: show, displayed: true, isStateChange: true)        
+       sendEvent(name: "lightState", value: 6, displayed: true, isStateChange: true)
+       sendEvent(name: "brightness", value: brightness, displayed: true, isStateChange: true)
+       sendEvent(name: "speed", value: speed, displayed: true, isStateChange: true)
+              
+    }
+  }
+}
+
+def setLightShowFixed(show, brightness) {
+  logMethod("setLightShowFixed", "Arguments", [show, brightness])
+
+  setLightShow(getShow(show), 4, getBrightness(brightness))
+}
+
+def setLightShowMulti(show, speed, brightness) {
+  logMethod("setLightShowMulti", "Arguments", [show, speed, brightness])
+
+  setLightShow(getShow(show), getSpeed(speed), getBrightness(brightness))
+}
+
+//return color\show number 
+Integer getShow(showName) {
+    
+	switch (showName) {
+		case 'Deep Blue Sea':
+			return 1
+			break;
+		case 'Royal Blue':
+			return 2
+			break;
+		case 'Afternoon Skies':
+			return 3
+			break;
+		case 'Aqua Green':
+			return 4
+			break;
+		case 'Emerald':
+			return 5
+			break;
+		case 'Cloud White':
+			return 6
+            break
+		case 'Warm Red':
+			return 7
+            break
+		case 'Flamingo':
+			return 8
+            break
+		case 'Vivid Violet':
+			return 9
+            break
+		case 'Sangria':
+			return 10
+            break
+		case 'Yellow':
+			return 17
+            break
+		case 'Orange':
+			return 18
+            break
+		case 'Gold':
+			return 19
+            break
+		case 'Mint':
+			return 20
+            break
+		case 'Teal':
+			return 21
+            break
+		case 'Burnt Orange':
+			return 22
+            break
+		case 'Pure White':
+			return 23
+            break
+		case 'Crisp White':
+			return 24
+            break
+        case 'Warm White':
+			return 25
+            break
+        case 'Bright Yellow':
+			return 26
+            break
+        case 'Voodoo Lounge':
+			return 0
+            break
+        case 'Twilight':
+			return 11
+            break        
+        case 'Tranquility':
+			return 12
+            break
+        case 'Gemstone':
+			return 13
+            break
+        case 'USA':
+			return 14
+            break
+        case 'Mardi Gras':
+			return 15
+            break
+        case 'Cool Cabaret':
+			return 16
+            break
+	}
+	return 0
+}
+
+//return speed number 
+Integer getSpeed(speedName) {
+
+	switch (speedName) {
+		case '1/16x':
+			return 0
+			break;
+		case '1/8x':
+			return 1
+			break;
+		case '1/4x':
+			return 2
+			break;
+		case '1/2x':
+			return 3
+			break;
+		case '1x':
+			return 4
+			break;
+		case '2x':
+			return 5
+            break
+		case '4x':
+			return 6
+            break
+		case '8x':
+			return 7
+            break
+		case '16x':
+			return 8
+            break
+	}
+	return 4
+}
+
+//return brightness number 
+Integer getBrightness(brightnessName) {
+
+	switch (brightnessName) {
+		case '20%':
+			return 0
+			break;
+		case '40%':
+			return 1
+			break;
+		case '60%':
+			return 2
+			break;
+		case '80%':
+			return 3
+			break;
+		case '100%':
+			return 4
+			break;
+	}
+	return 4
+}
+
+
+def logMethod(method, message = null, arguments = null) {
+  parent.logMethod(device, method, message, arguments)
+}
