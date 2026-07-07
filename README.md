@@ -37,34 +37,29 @@ no per-segment control). A trimmed-down fork of bryan@joyful.house's driver.
 - Configurable transition time and refresh interval; connects via the WLED
   device URL.
 
-## OmniLogic pool/spa drivers (child devices)
+## OmniLogic pool/spa integration — [`OmniLogic/`](OmniLogic/)
 
-Component drivers for a Hayward **OmniLogic** pool automation integration — they
-are created and polled by a parent OmniLogic app (they call
-`parent.updateDeviceStatuses()`), not installed on their own.
+A full Hayward **OmniLogic** integration: a parent SmartApp plus child device
+drivers. It is a fork of
+[maartenvantjonger/omnilogic-smartapp](https://github.com/maartenvantjonger/omnilogic-smartapp)
+with the heater, light, and VSP pump drivers replaced by customized (SR)
+versions. Install the parent app and device handlers from the
+[`OmniLogic/`](OmniLogic/) folder; the child devices are created and polled by
+the parent app, not installed individually.
 
-### OmniLogic Heater (sr) — [`OmniLogicHeaterSR`](https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicHeaterSR)
+Customized drivers in this fork:
 
-Pool/spa heater exposed as a **Thermostat** (heat/off) with **Temperature
-Measurement**. Reports water temperature and setpoint range, and can optionally
-hold the last valid reading so temperatures aren't shown as invalid while the
-filter pump is off.
+- **OmniLogic Heater** — thermostat (heat/off) with temperature measurement;
+  can hold the last valid reading so temperatures aren't shown as invalid while
+  the filter pump is off.
+- **OmniLogic Light** — switch with rich show control: `setLightShow` (numeric
+  show/speed/brightness), `setLightShowFixed` (named solid colors), and
+  `setLightShowMulti` (named animated shows).
+- **OmniLogic VSP** — variable-speed filter pump as a switch + level (level maps
+  to pump speed); spillover-aware.
 
-### OmniLogic Light (sr) — [`OmniLogicLightSR`](https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicLightSR)
-
-Pool/spa light as a **Switch** with rich show control:
-
-- **`setLightShow`** — numeric show (0–26), speed (0–8), brightness (0–4).
-- **`setLightShowFixed`** — named solid colors (Deep Blue Sea, Emerald, …) with
-  20–100% brightness.
-- **`setLightShowMulti`** — named animated shows (Voodoo Lounge, Mardi Gras, …)
-  with speed and brightness.
-
-### OmniLogic VSP Pump (sr) — [`OmniLogicVSPPumpSR`](https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogicVSPPumpSR)
-
-Variable-speed filter pump as a **Switch** + **Switch Level**, where level maps
-to pump speed. Tracks pump state/speed and is spillover-aware (reports on only
-when the pump is running in the correct valve position).
+The remaining drivers (pump, relay, chlorinator, super-chlorinator, temperature
+sensor) and the parent app are unchanged from upstream.
 
 ## Samsung Frame TV — quick start
 
