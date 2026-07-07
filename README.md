@@ -12,7 +12,12 @@ subfolders as needed. To install a driver or app in Hubitat, open **Drivers Code
 |---|---|---|
 | [`samsung-frame-tv/`](samsung-frame-tv/) | Local-LAN control of a Samsung Frame / Tizen TV (no cloud) | Driver |
 | [`wled-simple/`](wled-simple/) | Simple whole-strip WLED controller | Driver |
+| [`lifx/`](lifx/) | Efficient fork of the LIFX LAN integration (master app + device drivers) | App + drivers |
+| [`ecobee/`](ecobee/) | Minimal local Ecobee thermostat integration | App + driver |
+| [`auto-clear-debug/`](auto-clear-debug/) | Auto-clears device debug logging after a set time | App |
 | [`omnilogic/`](omnilogic/) | Full Hayward OmniLogic pool/spa integration (fork) | App + drivers |
+
+Each project folder has its own README with details and setup notes.
 
 ---
 
