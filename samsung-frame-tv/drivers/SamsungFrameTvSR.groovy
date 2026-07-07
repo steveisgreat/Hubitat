@@ -5,8 +5,9 @@
  *  NO Samsung / SmartThings cloud account is used.
  *
  *    - Power ON  : Wake-on-LAN magic packet sent to the TV's MAC address.
- *    - Power OFF : "KEY_POWER" sent over the TV's local WebSocket remote API
- *                  (wss://<ip>:8002/api/v2/channels/samsung.remote.control).
+ *    - Power OFF : a *held* "KEY_POWER" (long-press) sent over the TV's local
+ *                  WebSocket remote API. On a Frame TV a short press only
+ *                  toggles Art Mode, so a hold is required to fully power off.
  *    - Status    : HTTP GET http://<ip>:8001/api/v2/  (succeeds only when the TV is on).
  *
  *  FIRST-TIME PAIRING
@@ -61,6 +62,7 @@ metadata {
         input name: "tvWolMac",  type: "string", title: "Alternate / Standby MAC (optional)", description: "Some Samsung TVs wake on a different MAC than the running one. If WoL is unreliable, enter it here.", required: false
         input name: "wolPort",   type: "enum",   title: "Wake-on-LAN Port", options: ["7": "7", "9": "9"], defaultValue: "9", required: true
         input name: "tvPort",    type: "enum",   title: "WebSocket Port", options: ["8002": "8002 (wss, 2018+ models)", "8001": "8001 (ws, older models)"], defaultValue: "8002", required: true
+        input name: "offHoldSecs", type: "enum", title: "Power-Off Hold Time", options: ["1": "1 sec", "2": "2 sec", "3": "3 sec", "4": "4 sec", "5": "5 sec"], defaultValue: "3", description: "Frame TVs power fully off only on a long-press of power; a short press just toggles Art Mode. Increase if Off still lands on Art Mode."
         input name: "pollMins",  type: "enum",   title: "Status Polling", options: ["0": "Disabled", "1": "1 min", "5": "5 min", "10": "10 min", "30": "30 min"], defaultValue: "5"
         input name: "logEnable", type: "bool",   title: "Enable debug logging", defaultValue: true
     }
@@ -151,9 +153,12 @@ private void sendWol(String rawMac) {
 }
 
 def off() {
-    if (logEnable) log.debug "off(): sending KEY_POWER over WebSocket"
-    sendKey("KEY_POWER")
-    runIn(6, "refresh")
+    // A short KEY_POWER click only toggles Art Mode on a Frame TV; a long-press
+    // is what actually powers it off. Hold KEY_POWER for the configured time.
+    def secs = (offHoldSecs ?: "3") as Integer
+    if (logEnable) log.debug "off(): long-pressing KEY_POWER for ${secs}s to power off"
+    holdKey("KEY_POWER", secs)
+    runIn(secs + 6, "refresh")
 }
 
 // ---------------------------------------------------------------------------
@@ -173,6 +178,21 @@ def sendKey(String key) {
     }
     if (logEnable) log.debug "sendKey(${key})"
     state.pendingKey = key
+    state.holdSecs = null
+    openSocket()
+}
+
+// Send a key as a long-press: Press now, Release after `secs`, over one socket.
+// Frame TVs power fully off only on a held KEY_POWER; a short Click just
+// toggles Art Mode.
+def holdKey(String key, Integer secs) {
+    if (!tvIp) {
+        log.warn "holdKey(): TV IP address not configured"
+        return
+    }
+    if (logEnable) log.debug "holdKey(${key}, ${secs}s)"
+    state.pendingKey = key
+    state.holdSecs = secs
     openSocket()
 }
 
@@ -205,6 +225,8 @@ def webSocketStatus(String status) {
         // A refused/closed connection while trying to send power-off usually
         // means the TV is already off. Reconcile state on the next poll.
         state.pendingKey = null
+        state.holdSecs = null
+        state.releaseKey = null
     }
 }
 
@@ -230,6 +252,8 @@ def parse(String message) {
     } else if (json?.event == "ms.channel.unauthorized") {
         log.warn "TV denied the connection. Approve the 'Allow' prompt on the TV screen and retry."
         state.pendingKey = null
+        state.holdSecs = null
+        state.releaseKey = null
         closeSocket()
     }
 }
@@ -238,24 +262,48 @@ private void sendPendingKey() {
     def key = state.pendingKey
     if (!key) { closeSocket(); return }
 
+    def hold = state.holdSecs as Integer
+    if (hold) {
+        // Long-press: press now, release after the hold, then close the socket.
+        sendRemote("Press", key)
+        state.pendingKey = null
+        state.holdSecs = null
+        state.releaseKey = key
+        runIn(hold, "sendReleaseKey")
+        return
+    }
+
+    // Short press.
+    sendRemote("Click", key)
+    state.pendingKey = null
+    // Give the TV a moment to act on the key, then close the socket cleanly.
+    runIn(2, "closeSocket")
+}
+
+// Release a key held by sendPendingKey, then close the socket. Scheduled via runIn.
+def sendReleaseKey() {
+    def key = state.releaseKey
+    if (key) sendRemote("Release", key)
+    state.releaseKey = null
+    runIn(2, "closeSocket")
+}
+
+private void sendRemote(String cmd, String key) {
     def payload = JsonOutput.toJson([
         method: "ms.remote.control",
         params: [
-            Cmd:          "Click",
+            Cmd:          cmd,
             DataOfCmd:    key,
             Option:       "false",
             TypeOfRemote: "SendRemoteKey"
         ]
     ])
-    if (logEnable) log.debug "Sending key payload: ${payload}"
+    if (logEnable) log.debug "Sending ${cmd} ${key}: ${payload}"
     try {
         interfaces.webSocket.sendMessage(payload)
     } catch (e) {
         log.error "sendMessage failed: ${e.message}"
     }
-    state.pendingKey = null
-    // Give the TV a moment to act on the key, then close the socket cleanly.
-    runIn(2, "closeSocket")
 }
 
 def closeSocket() {
