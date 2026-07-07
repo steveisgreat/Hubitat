@@ -37,7 +37,7 @@ metadata {
         name:      "Samsung Frame TV (Local LAN)",
         namespace: "sriley-claude",
         author:    "Steve Riley",
-        importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/samsung-frame-tv/drivers/SamsungFrameTvSR"
+        importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/samsung-frame-tv/drivers/SamsungFrameTvSR.groovy"
     ) {
         capability "Switch"
         capability "Refresh"
