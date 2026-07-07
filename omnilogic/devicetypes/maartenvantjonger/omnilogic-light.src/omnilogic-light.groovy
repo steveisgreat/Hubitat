@@ -8,7 +8,7 @@ metadata {
     name: "OmniLogic Light",
     namespace: "maartenvantjonger",
     author: "Steve Riley",
-    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogic/devicetypes/maartenvantjonger/omnilogic-light.src/omnilogic-light.groovy"
+    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/omnilogic/devicetypes/maartenvantjonger/omnilogic-light.src/omnilogic-light.groovy"
   ) {
     capability "Switch"
     capability "Actuator"

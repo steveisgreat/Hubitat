@@ -8,7 +8,7 @@ metadata {
     name: "OmniLogic Heater",
     namespace: "maartenvantjonger",
     author: "Steve Riley",
-    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogic/devicetypes/maartenvantjonger/omnilogic-heater.src/omnilogic-heater.groovy"
+    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/omnilogic/devicetypes/maartenvantjonger/omnilogic-heater.src/omnilogic-heater.groovy"
   ) {
     capability "Sensor"
     capability "Actuator"

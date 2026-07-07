@@ -8,7 +8,7 @@ metadata {
     name: "OmniLogic VSP",
     namespace: "maartenvantjonger",
     author: "Steve Riley",
-    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/OmniLogic/devicetypes/maartenvantjonger/omnilogic-vsp.src/omnilogic-vsp.groovy"
+    importUrl: "https://raw.githubusercontent.com/steveisgreat/Hubitat/main/omnilogic/devicetypes/maartenvantjonger/omnilogic-vsp.src/omnilogic-vsp.groovy"
   ) {
     capability "Switch"
     capability "Switch Level"      
